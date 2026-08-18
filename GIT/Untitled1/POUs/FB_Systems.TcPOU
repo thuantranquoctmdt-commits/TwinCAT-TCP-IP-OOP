@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="FB_Systems" Id="{78cbbe82-8659-4fb1-ad5c-042242d6ce53}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Systems
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	ClientTCP : FB_TcpClient;
+    
+    bKetNoi   : BOOL;
+    bGuiData  : BOOL;
+    
+    // Gói dữ liệu test
+    sMessage  : STRING := 'Hello Server OOP';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Chạy bộ não của khối TCP
+ClientTCP.M_Execute();
+
+// Test thao tác kết nối
+IF bKetNoi AND NOT ClientTCP.IsConnected THEN
+    ClientTCP.M_Connect(sIP := '192.168.1.100', nPort := 502); 
+    bKetNoi := FALSE; // Reset nút nhấn
+END_IF
+
+// Test thao tác gửi dữ liệu qua Con trỏ (Pointer)
+IF bGuiData AND ClientTCP.IsConnected THEN
+    ClientTCP.M_Send(
+        pData := ADR(sMessage), 
+        nSize := INT_TO_UDINT(LEN(sMessage))
+    );
+    bGuiData := FALSE;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Systems">
+      <LineId Id="20" Count="15" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

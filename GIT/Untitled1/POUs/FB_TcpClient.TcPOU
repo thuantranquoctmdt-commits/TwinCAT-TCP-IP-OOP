@@ -1,0 +1,194 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="FB_TcpClient" Id="{ae213159-145b-49ca-8ecb-5d4bea2f693b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TcpClient IMPLEMENTS I_Tcp
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	// Các hàm của hệ thống Beckhoff
+    fbConnect       : FB_SocketConnect;
+    fbClose         : FB_SocketClose;
+    fbSend          : FB_SocketSend;
+    fbReceive       : FB_SocketReceive;
+    
+    // Quản lý kết nối
+    hSocket         : T_HSOCKET; // Chìa khóa (Handle) của phiên kết nối
+    _bConnected     : BOOL;
+    nState          : INT := 0;  // Biến chạy State Machine
+    
+    // Bộ đệm nhận dữ liệu
+    arrRxBuffer     : ARRAY[0..255] OF BYTE;
+    nBytesReceived  : UDINT;
+	// Cờ lệnh (Command Flags) nhận từ Method
+    bCmdConnect     : BOOL;
+    bCmdDisconnect  : BOOL;
+    bCmdSend        : BOOL;
+    
+    // Thông số kết nối lưu tạm
+    sIP_Address     : STRING(15);
+    nTargetPort     : UINT;
+    
+    // Dữ liệu gửi đi
+    pSendData       : POINTER TO BYTE;
+    nSendSize       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Property Name="IsConnected" Id="{8d1a7930-b002-4875-b66f-7f3573a5a8c3}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY IsConnected : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{a52101a9-de99-4d8f-a7aa-979060e26828}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsConnected := _bConnected;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="M_Connect" Id="{9b5ae829-009a-4bae-b78f-b51a58574236}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD M_Connect
+VAR_INPUT
+	sIP	: STRING(15);
+	nPort	: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Lưu lại địa chỉ IP và Port người dùng muốn kết nối
+sIP_Address := sIP;
+nTargetPort := nPort;
+
+// Bật cờ ra lệnh cho máy trạng thái chạy
+bCmdConnect := TRUE;
+bCmdDisconnect := FALSE; // Đảm bảo cờ ngắt kết nối đang tắt]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Disconnect" Id="{9692d91f-57cf-426f-b2a1-503b6cd78bfc}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD M_Disconnect
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Bật cờ ra lệnh ngắt kết nối
+bCmdDisconnect := TRUE;
+bCmdConnect := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Execute" Id="{e300db8d-86ed-4a36-86db-bdd4c19103b4}">
+      <Declaration><![CDATA[METHOD M_Execute
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// --- STATE MACHINE QUẢN LÝ TCP/IP ---
+CASE nState OF
+    0: // CHỜ KẾT NỐI
+        IF bCmdConnect THEN
+            fbConnect(
+                sSrvNetId   := '', 
+                sRemoteHost := sIP_Address, 
+                nRemotePort := nTargetPort, 
+                bExecute    := TRUE, 
+                tTimeout    := T#3S
+            );
+            nState := 10;
+        END_IF
+
+    10: // ĐANG KẾT NỐI
+        fbConnect(bExecute := FALSE);
+        IF NOT fbConnect.bBusy THEN
+            IF NOT fbConnect.bError THEN
+                hSocket := fbConnect.hSocket; // Lấy chìa khóa giao tiếp
+                _bConnected := TRUE;
+                nState := 20; // Chuyển sang trạng thái sẵn sàng
+            ELSE
+                nState := 99; // Báo lỗi
+            END_IF
+        END_IF
+
+    20: // ĐÃ KẾT NỐI & LẮNG NGHE DỮ LIỆU
+        // Gọi hàm Receive liên tục để hứng data từ Server
+        fbReceive(
+            hSocket     := hSocket,
+            cbLen       := SIZEOF(arrRxBuffer),
+            pDest       := ADR(arrRxBuffer),
+            bExecute    := TRUE,
+            tTimeout    := T#1S
+        );
+        IF NOT fbReceive.bBusy THEN
+            IF NOT fbReceive.bError AND fbReceive.nRecBytes > 0 THEN
+                nBytesReceived := fbReceive.nRecBytes;
+                // Dữ liệu đã nằm trong arrRxBuffer, có thể xử lý tại đây
+            END_IF
+            fbReceive(bExecute := FALSE); // Reset xung để đọc chu kỳ tiếp theo
+        END_IF
+        
+        // Thoát nếu có lệnh ngắt
+        IF bCmdDisconnect THEN
+            _bConnected := FALSE;
+            nState := 30;
+        END_IF
+
+    30: // NGẮT KẾT NỐI
+        fbClose(
+            hSocket  := hSocket,
+            bExecute := TRUE,
+            tTimeout := T#1S
+        );
+        IF NOT fbClose.bBusy THEN
+            fbClose(bExecute := FALSE);
+            nState := 0; // Quay về chờ
+        END_IF
+        
+    99: // XỬ LÝ LỖI
+        _bConnected := FALSE;
+        // Logic reset lỗi...
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Send" Id="{3e6def27-a0f7-44e9-8d01-1206cd6e0af2}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD M_Send
+VAR_INPUT
+	pData	: POINTER TO BYTE;
+	nSize	: UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Lấy địa chỉ và kích thước gói tin cần gửi
+pSendData := pData;
+nSendSize := nSize;
+
+// Bật cờ để M_Execute biết là có hàng cần giao
+bCmdSend := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TcpClient">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TcpClient.IsConnected.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TcpClient.M_Connect">
+      <LineId Id="9" Count="5" />
+      <LineId Id="8" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TcpClient.M_Disconnect">
+      <LineId Id="5" Count="1" />
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TcpClient.M_Execute">
+      <LineId Id="6" Count="62" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TcpClient.M_Send">
+      <LineId Id="9" Count="4" />
+      <LineId Id="8" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

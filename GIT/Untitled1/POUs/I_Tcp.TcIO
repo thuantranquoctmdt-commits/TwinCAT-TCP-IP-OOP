@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <Itf Name="I_Tcp" Id="{675a86ed-a3b6-46e2-aee7-c3672de57f3b}">
+    <Declaration><![CDATA[INTERFACE I_Tcp
+]]></Declaration>
+    <Property Name="IsConnected" Id="{d8fc37cb-64fe-414a-84b9-dea7925ba02d}">
+      <Declaration><![CDATA[PROPERTY IsConnected : bool]]></Declaration>
+      <Get Name="Get" Id="{659d5b70-4280-4499-b8a1-1f399723d254}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Method Name="M_Connect" Id="{eb592ad8-eb54-4b98-9980-f6fda7674d35}">
+      <Declaration><![CDATA[METHOD M_Connect
+VAR_INPUT
+	sIP   : STRING(15);
+    nPort : UINT;
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="M_Disconnect" Id="{a5ad9563-e79d-4411-8cab-d54b7e44d7af}">
+      <Declaration><![CDATA[METHOD M_Disconnect
+VAR_INPUT
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="M_Send" Id="{b37546fe-60ef-4cd3-ab8a-a0bf99536680}">
+      <Declaration><![CDATA[METHOD M_Send
+VAR_INPUT
+	pData : POINTER TO BYTE; 
+    nSize : UDINT;
+END_VAR
+]]></Declaration>
+    </Method>
+  </Itf>
+</TcPlcObject>
