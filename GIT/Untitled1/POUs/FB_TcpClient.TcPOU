@@ -57,13 +57,11 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Lưu lại địa chỉ IP và Port người dùng muốn kết nối
-sIP_Address := sIP;
+        <ST><![CDATA[sIP_Address := sIP;
 nTargetPort := nPort;
 
-// Bật cờ ra lệnh cho máy trạng thái chạy
 bCmdConnect := TRUE;
-bCmdDisconnect := FALSE; // Đảm bảo cờ ngắt kết nối đang tắt]]></ST>
+bCmdDisconnect := FALSE;]]></ST>
       </Implementation>
     </Method>
     <Method Name="M_Disconnect" Id="{9692d91f-57cf-426f-b2a1-503b6cd78bfc}">
@@ -71,8 +69,7 @@ bCmdDisconnect := FALSE; // Đảm bảo cờ ngắt kết nối đang tắt]]><
 METHOD M_Disconnect
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Bật cờ ra lệnh ngắt kết nối
-bCmdDisconnect := TRUE;
+        <ST><![CDATA[bCmdDisconnect := TRUE;
 bCmdConnect := FALSE;]]></ST>
       </Implementation>
     </Method>
@@ -82,9 +79,8 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// --- STATE MACHINE QUẢN LÝ TCP/IP ---
-CASE nState OF
-    0: // CHỜ KẾT NỐI
+        <ST><![CDATA[CASE nState OF
+    0:
         IF bCmdConnect THEN
             fbConnect(
                 sSrvNetId   := '', 
@@ -96,20 +92,18 @@ CASE nState OF
             nState := 10;
         END_IF
 
-    10: // ĐANG KẾT NỐI
+    10:
         fbConnect(bExecute := FALSE);
         IF NOT fbConnect.bBusy THEN
             IF NOT fbConnect.bError THEN
-                hSocket := fbConnect.hSocket; // Lấy chìa khóa giao tiếp
+                hSocket := fbConnect.hSocket;
                 _bConnected := TRUE;
-                nState := 20; // Chuyển sang trạng thái sẵn sàng
-            ELSE
-                nState := 99; // Báo lỗi
+                nState := 20;
+                nState := 99;
             END_IF
         END_IF
 
-    20: // ĐÃ KẾT NỐI & LẮNG NGHE DỮ LIỆU
-        // Gọi hàm Receive liên tục để hứng data từ Server
+    20: 
         fbReceive(
             hSocket     := hSocket,
             cbLen       := SIZEOF(arrRxBuffer),
@@ -120,18 +114,17 @@ CASE nState OF
         IF NOT fbReceive.bBusy THEN
             IF NOT fbReceive.bError AND fbReceive.nRecBytes > 0 THEN
                 nBytesReceived := fbReceive.nRecBytes;
-                // Dữ liệu đã nằm trong arrRxBuffer, có thể xử lý tại đây
+              
             END_IF
-            fbReceive(bExecute := FALSE); // Reset xung để đọc chu kỳ tiếp theo
+            fbReceive(bExecute := FALSE);
         END_IF
-        
-        // Thoát nếu có lệnh ngắt
+
         IF bCmdDisconnect THEN
             _bConnected := FALSE;
             nState := 30;
         END_IF
 
-    30: // NGẮT KẾT NỐI
+    30:
         fbClose(
             hSocket  := hSocket,
             bExecute := TRUE,
@@ -139,12 +132,11 @@ CASE nState OF
         );
         IF NOT fbClose.bBusy THEN
             fbClose(bExecute := FALSE);
-            nState := 0; // Quay về chờ
+            nState := 0; 
         END_IF
         
-    99: // XỬ LÝ LỖI
+    99: 
         _bConnected := FALSE;
-        // Logic reset lỗi...
 END_CASE]]></ST>
       </Implementation>
     </Method>
@@ -157,11 +149,9 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Lấy địa chỉ và kích thước gói tin cần gửi
-pSendData := pData;
+        <ST><![CDATA[pSendData := pData;
 nSendSize := nSize;
 
-// Bật cờ để M_Execute biết là có hàng cần giao
 bCmdSend := TRUE;]]></ST>
       </Implementation>
     </Method>
@@ -172,19 +162,24 @@ bCmdSend := TRUE;]]></ST>
       <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="FB_TcpClient.M_Connect">
-      <LineId Id="9" Count="5" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="13" Count="1" />
       <LineId Id="8" Count="0" />
     </LineIds>
     <LineIds Name="FB_TcpClient.M_Disconnect">
-      <LineId Id="5" Count="1" />
+      <LineId Id="6" Count="0" />
       <LineId Id="4" Count="0" />
     </LineIds>
     <LineIds Name="FB_TcpClient.M_Execute">
-      <LineId Id="6" Count="62" />
+      <LineId Id="7" Count="19" />
+      <LineId Id="28" Count="4" />
+      <LineId Id="34" Count="13" />
+      <LineId Id="49" Count="18" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_TcpClient.M_Send">
-      <LineId Id="9" Count="4" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="20" Count="0" />
       <LineId Id="8" Count="0" />
     </LineIds>
   </POU>
