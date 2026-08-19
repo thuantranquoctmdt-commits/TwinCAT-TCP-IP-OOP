@@ -11,22 +11,18 @@ VAR
     
     bKetNoi   : BOOL;
     bGuiData  : BOOL;
-    
-    // Gói dữ liệu test
+
     sMessage  : STRING := 'Hello Server OOP';
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Chạy bộ não của khối TCP
-ClientTCP.M_Execute();
+      <ST><![CDATA[ClientTCP.M_Execute();
 
-// Test thao tác kết nối
 IF bKetNoi AND NOT ClientTCP.IsConnected THEN
     ClientTCP.M_Connect(sIP := '192.168.1.100', nPort := 502); 
-    bKetNoi := FALSE; // Reset nút nhấn
+    bKetNoi := FALSE; 
 END_IF
 
-// Test thao tác gửi dữ liệu qua Con trỏ (Pointer)
 IF bGuiData AND ClientTCP.IsConnected THEN
     ClientTCP.M_Send(
         pData := ADR(sMessage), 
@@ -36,7 +32,9 @@ IF bGuiData AND ClientTCP.IsConnected THEN
 END_IF]]></ST>
     </Implementation>
     <LineIds Name="FB_Systems">
-      <LineId Id="20" Count="15" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="23" Count="4" />
+      <LineId Id="29" Count="6" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

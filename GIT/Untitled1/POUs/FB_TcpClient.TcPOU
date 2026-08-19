@@ -7,30 +7,27 @@ END_VAR
 VAR_OUTPUT
 END_VAR
 VAR
-	// Các hàm của hệ thống Beckhoff
+
     fbConnect       : FB_SocketConnect;
     fbClose         : FB_SocketClose;
     fbSend          : FB_SocketSend;
     fbReceive       : FB_SocketReceive;
     
-    // Quản lý kết nối
-    hSocket         : T_HSOCKET; // Chìa khóa (Handle) của phiên kết nối
+    hSocket         : T_HSOCKET; 
     _bConnected     : BOOL;
-    nState          : INT := 0;  // Biến chạy State Machine
+    nState          : INT := 0;  
     
-    // Bộ đệm nhận dữ liệu
+
     arrRxBuffer     : ARRAY[0..255] OF BYTE;
     nBytesReceived  : UDINT;
-	// Cờ lệnh (Command Flags) nhận từ Method
+
     bCmdConnect     : BOOL;
     bCmdDisconnect  : BOOL;
     bCmdSend        : BOOL;
     
-    // Thông số kết nối lưu tạm
     sIP_Address     : STRING(15);
     nTargetPort     : UINT;
     
-    // Dữ liệu gửi đi
     pSendData       : POINTER TO BYTE;
     nSendSize       : UDINT;
 END_VAR
