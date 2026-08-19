@@ -20,6 +20,7 @@ VAR
 
     arrRxBuffer     : ARRAY[0..255] OF BYTE;
     nBytesReceived  : UDINT;
+	stRxData        : ST_ServerResponse;
 
     bCmdConnect     : BOOL;
     bCmdDisconnect  : BOOL;
@@ -114,7 +115,7 @@ END_VAR
         IF NOT fbReceive.bBusy THEN
             IF NOT fbReceive.bError AND fbReceive.nRecBytes > 0 THEN
                 nBytesReceived := fbReceive.nRecBytes;
-              
+                MEMCPY(ADR(stRxData), ADR(arrRxBuffer), SIZEOF(stRxData));
             END_IF
             fbReceive(bExecute := FALSE);
         END_IF
