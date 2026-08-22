@@ -3,11 +3,11 @@
   <POU Name="MAIN" Id="{92f14351-dcbb-423d-9f1d-1757ec898e20}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM MAIN
 VAR
-	Hethong : FB_Systems;
+	Hethong2 : FB_Systems;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[Hethong();]]></ST>
+      <ST><![CDATA[Hethong2();]]></ST>
     </Implementation>
     <LineIds Name="MAIN">
       <LineId Id="2" Count="0" />
